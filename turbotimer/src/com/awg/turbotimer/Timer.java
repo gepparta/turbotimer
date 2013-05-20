@@ -1,5 +1,9 @@
 
 package com.awg.turbotimer;
+/*
+ * Klassse wird im moment nicht verwendet
+ * vlt. später
+ */
 
 import android.content.Context;
 import android.graphics.Canvas;
