@@ -6,7 +6,6 @@ import android.app.Activity;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v4.app.NavUtils;
 import android.text.format.Time;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -18,14 +17,18 @@ public class TimerActivity extends Activity {
 
     private static final boolean DEBUG = true;
     private static final String TAG = "AgendaListView";
+    private static final String START_TIME_KEY = "startTime";
 
     private Handler mHandler = new Handler();
     final Time timer = new Time();
     // HH:mm:ss.SSS
-//    private static final SimpleDateFormat HOURS = new SimpleDateFormat("HH");
-//    private static final SimpleDateFormat MINUTES = new SimpleDateFormat("mm");
-//    private static final SimpleDateFormat SECONDS = new SimpleDateFormat("ss");
-//    private static final SimpleDateFormat MSECONDS = new SimpleDateFormat("S");
+    // private static final SimpleDateFormat HOURS = new SimpleDateFormat("HH");
+    // private static final SimpleDateFormat MINUTES = new
+    // SimpleDateFormat("mm");
+    // private static final SimpleDateFormat SECONDS = new
+    // SimpleDateFormat("ss");
+    // private static final SimpleDateFormat MSECONDS = new
+    // SimpleDateFormat("S");
     private static final SimpleDateFormat TIME = new SimpleDateFormat("HH:mm:ss.S");
 
     private final int REFRESH_RATE = 1000;
@@ -44,7 +47,14 @@ public class TimerActivity extends Activity {
         setupActionBar();
         textView = (TextView) findViewById(R.id.time);
 
-        startTime = System.currentTimeMillis();
+        if (savedInstanceState != null && savedInstanceState.containsKey(START_TIME_KEY))
+        {
+            startTime = savedInstanceState.getLong(START_TIME_KEY);
+        } else
+        {
+            startTime = System.currentTimeMillis();
+        }
+
         mHandler.removeCallbacks(startTimer);
         mHandler.postDelayed(startTimer, 0);
     }
@@ -57,6 +67,17 @@ public class TimerActivity extends Activity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
             getActionBar().setDisplayHomeAsUpEnabled(true);
         }
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see android.app.Activity#onSaveInstanceState(android.os.Bundle)
+     */
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        // save current starttime for onCreate method
+        outState.putLong(START_TIME_KEY, startTime);
     }
 
     @Override
