@@ -3,9 +3,13 @@ package com.awg.turbotimer;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.TextToSpeech.Engine;
+import android.speech.tts.TextToSpeech.OnInitListener;
 import android.support.v4.app.NavUtils;
 import android.text.format.Time;
 import android.view.Menu;
@@ -13,6 +17,7 @@ import android.view.MenuItem;
 import android.widget.TextView;
 
 import java.text.SimpleDateFormat;
+import java.util.Locale;
 
 public class TimerActivity extends Activity {
 
@@ -30,19 +35,26 @@ public class TimerActivity extends Activity {
     // SimpleDateFormat("ss");
     // private static final SimpleDateFormat MSECONDS = new
     // SimpleDateFormat("S");
-    private static final SimpleDateFormat TIME = new SimpleDateFormat("HH:mm:ss.S");
+    private static final SimpleDateFormat TIME = new SimpleDateFormat("HH:mm:ss");
 
-    private final int REFRESH_RATE = 1000;
+    private final int REFRESH_RATE = 10;
     private long startTime;
     private long elapsedTime;
-    private String hours, minutes, seconds, milliseconds;
-    private long secs, mins, hrs, msecs;
+    // private String hours, minutes, seconds, milliseconds;
+    // private long secs, mins, hrs, msecs;
 
     private TextView textView;
+
+    private static int TTS_DATA_CHECK = 1;
+    private TextToSpeech tts = null;
+    private boolean ttsIsInit = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        initTextToSpeech();
+
         setContentView(R.layout.activity_timer);
         // Show the Up button in the action bar.
         setupActionBar();
@@ -108,6 +120,9 @@ public class TimerActivity extends Activity {
     private Runnable startTimer = new Runnable() {
         public void run() {
             elapsedTime = System.currentTimeMillis() - startTime;
+
+            check4Countdown(elapsedTime);
+
             updateTimer(elapsedTime);
             mHandler.postDelayed(this, REFRESH_RATE);
         }
@@ -189,5 +204,58 @@ public class TimerActivity extends Activity {
         // MSECONDS.format(timer.toMillis(false)));
         // }
 
+    }
+
+    protected void check4Countdown(long elapsedTime) {
+
+        final long time = elapsedTime;
+
+        // start a new worker thread for countdown if needed
+        new Thread(new Runnable() {
+            public void run() {
+                if (time > 4900 && time < 5100)
+                    speak(5);
+                else if (time > 5900 && time < 6100)
+                    speak(6);
+                else if (time > 6900 && time < 7100)
+                    speak(7);
+                else if (time > 7900 && time < 8100)
+                    speak(8);
+            }
+        }).start();
+
+    }
+
+    private void initTextToSpeech() {
+        Intent intent = new Intent(Engine.ACTION_CHECK_TTS_DATA);
+        startActivityForResult(intent, TTS_DATA_CHECK);
+    }
+
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == TTS_DATA_CHECK) {
+            if (resultCode == Engine.CHECK_VOICE_DATA_PASS) {
+                tts = new TextToSpeech(this, new OnInitListener() {
+                    public void onInit(int status) {
+                        if (status == TextToSpeech.SUCCESS) {
+                            ttsIsInit = true;
+
+                        }
+                    }
+                });
+            }
+            else {
+                Intent installVoice = new Intent(Engine.ACTION_INSTALL_TTS_DATA);
+                startActivity(installVoice);
+            }
+        }
+    }
+
+    private void speak(int second) {
+
+        if (tts != null && ttsIsInit) {
+            tts.setLanguage(Locale.US);
+            tts.speak("" + second,
+                    TextToSpeech.QUEUE_ADD, null);
+        }
     }
 }
