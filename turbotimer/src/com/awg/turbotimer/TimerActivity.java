@@ -1,6 +1,7 @@
 
 package com.awg.turbotimer;
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
@@ -11,7 +12,6 @@ import android.speech.tts.TextToSpeech;
 import android.speech.tts.TextToSpeech.Engine;
 import android.speech.tts.TextToSpeech.OnInitListener;
 import android.support.v4.app.NavUtils;
-import android.text.format.Time;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
@@ -19,39 +19,53 @@ import android.widget.TextView;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 
-public class TimerActivity extends Activity {
+public class TimerActivity extends Activity implements OnInitListener {
 
     private static final boolean DEBUG = true;
     private static final String TAG = "AgendaListView";
     private static final String START_TIME_KEY = "startTime";
-
+    TimerActivity self;
+    private Command countdown;
     private Handler mHandler = new Handler();
-    final Time timer = new Time();
-    // HH:mm:ss.SSS
-    // private static final SimpleDateFormat HOURS = new SimpleDateFormat("HH");
-    // private static final SimpleDateFormat MINUTES = new
-    // SimpleDateFormat("mm");
-    // private static final SimpleDateFormat SECONDS = new
-    // SimpleDateFormat("ss");
-    // private static final SimpleDateFormat MSECONDS = new
-    // SimpleDateFormat("S");
+    // final Time timer = new Time();
+
+    @SuppressLint("SimpleDateFormat")
     private static final SimpleDateFormat TIME = new SimpleDateFormat("HH:mm:ss");
 
     private final int REFRESH_RATE = 10;
     private long startTime;
     private long elapsedTime;
-    // private String hours, minutes, seconds, milliseconds;
-    // private long secs, mins, hrs, msecs;
 
     private TextView textView;
 
     private static int TTS_DATA_CHECK = 1;
     private TextToSpeech tts = null;
     private boolean ttsIsInit = false;
+    private int checkedRadioButtonId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        self = this;
+
+        Bundle extraBundle = getIntent().getExtras();
+        checkedRadioButtonId = extraBundle.getInt(MainActivity.CHECKED_RADIO_BUTTON_ID);
+
+        switch (checkedRadioButtonId) {
+            case R.id.rbladders:
+                countdown = new LaddersCountdown();
+            case R.id.rbinterval_sets:
+                countdown = new IntervalSetsCountdown();
+            case R.id.rbsuper_sets:
+                 countdown = new SuperSetsCountdown();
+            case R.id.rbsteppers:
+                 countdown = new SteppersCountdown();
+            case R.id.rbtabatas:
+                 countdown = new TabatasCountdown();
+
+            default:
+                break;
+        }
 
         initTextToSpeech();
 
@@ -68,6 +82,7 @@ public class TimerActivity extends Activity {
             startTime = System.currentTimeMillis();
         }
 
+        // start the Timer
         mHandler.removeCallbacks(startTimer);
         mHandler.postDelayed(startTimer, 0);
     }
@@ -118,10 +133,9 @@ public class TimerActivity extends Activity {
     }
 
     private Runnable startTimer = new Runnable() {
+        @Override
         public void run() {
             elapsedTime = System.currentTimeMillis() - startTime;
-
-            check4Countdown(elapsedTime);
 
             updateTimer(elapsedTime);
             mHandler.postDelayed(this, REFRESH_RATE);
@@ -131,99 +145,6 @@ public class TimerActivity extends Activity {
     private void updateTimer(long time) {
 
         textView.setText(TIME.format(time));
-        // secs = (long) (time / 1000);
-        // mins = (long) ((time / 1000) / 60);
-        // hrs = (long) (((time / 1000) / 60) / 60);
-
-        /*
-         * Convert the seconds to String and format to ensure it has a leading
-         * zero when required
-         */
-        // secs = secs % 60;
-        // seconds = String.valueOf(secs);
-        // if (secs == 0) {
-        // seconds = "00";
-        // }
-        // if (secs < 10 && secs > 0) {
-        // seconds = "0" + seconds;
-        // }
-
-        /* Convert the minutes to String and format the String */
-
-        // mins = mins % 60;
-        // minutes = String.valueOf(mins);
-        // if (mins == 0) {
-        // minutes = "00";
-        // }
-        // if (mins < 10 && mins > 0) {
-        // minutes = "0" + minutes;
-        // }
-
-        /* Convert the hours to String and format the String */
-
-        // hours = String.valueOf(hrs);
-        // if (hrs == 0) {
-        // hours = "00";
-        // }
-        // if (hrs < 10 && hrs > 0) {
-        // hours = "0" + hours;
-        // }
-
-        /*
-         * Although we are not using milliseconds on the timer in this example I
-         * included the code in the event that you wanted to include it on your
-         * own
-         */
-        // milliseconds = String.valueOf((long) time);
-        // if (milliseconds.length() == 2) {
-        // milliseconds = "0" + milliseconds;
-        // }
-        // if (milliseconds.length() <= 1) {
-        // milliseconds = "00";
-        // }
-        // milliseconds = milliseconds.substring(milliseconds.length() - 3,
-        // milliseconds.length() - 2);
-        /* Setting the timer text to the elapsed time */
-        // ((Timer) findViewById(R.id.hours)).setCurrentDigit(hours);
-        // ((Timer) findViewById(R.id.minutes)).setCurrentDigit(minutes);
-        // ((Timer) findViewById(R.id.seconds)).setCurrentDigit(seconds);
-        // ((Timer)
-        // findViewById(R.id.milliseconds)).setCurrentDigit(milliseconds);
-
-        // ((Timer)
-        // findViewById(R.id.minutes)).setCurrentDigit(String.valueOf(mins));
-        // ((Timer)
-        // findViewById(R.id.seconds)).setCurrentDigit(String.valueOf(secs));
-        // ((Timer)
-        // findViewById(R.id.milliseconds)).setCurrentDigit(String.valueOf(msecs));
-
-        // if (DEBUG) {
-        // Log.v(getResources().getString(R.string.app_name), "SECONDS = " +
-        // SECONDS.format(timer.second));
-        // Log.v(getResources().getString(R.string.app_name), "MSECONDS = " +
-        // MSECONDS.format(timer.toMillis(false)));
-        // }
-
-    }
-
-    protected void check4Countdown(long elapsedTime) {
-
-        final long time = elapsedTime;
-
-        // start a new worker thread for countdown if needed
-        new Thread(new Runnable() {
-            public void run() {
-                if (time > 4900 && time < 5100)
-                    speak(5);
-                else if (time > 5900 && time < 6100)
-                    speak(6);
-                else if (time > 6900 && time < 7100)
-                    speak(7);
-                else if (time > 7900 && time < 8100)
-                    speak(8);
-            }
-        }).start();
-
     }
 
     private void initTextToSpeech() {
@@ -231,17 +152,12 @@ public class TimerActivity extends Activity {
         startActivityForResult(intent, TTS_DATA_CHECK);
     }
 
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == TTS_DATA_CHECK) {
             if (resultCode == Engine.CHECK_VOICE_DATA_PASS) {
-                tts = new TextToSpeech(this, new OnInitListener() {
-                    public void onInit(int status) {
-                        if (status == TextToSpeech.SUCCESS) {
-                            ttsIsInit = true;
-
-                        }
-                    }
-                });
+                tts = new TextToSpeech(this, this);
+                startCoundown(tts);
             }
             else {
                 Intent installVoice = new Intent(Engine.ACTION_INSTALL_TTS_DATA);
@@ -250,12 +166,34 @@ public class TimerActivity extends Activity {
         }
     }
 
-    private void speak(int second) {
+    /**
+     * @return the elapsedTime
+     */
+    public long getElapsedTime() {
+        return elapsedTime;
+    }
 
-        if (tts != null && ttsIsInit) {
+    /**
+     * @return the tts
+     */
+    public TextToSpeech getTts() {
+        return tts;
+    }
+
+    @Override
+    public void onInit(int status) {
+        // if tts is initialised start logic
+        if (status == TextToSpeech.SUCCESS) {
+            ttsIsInit = true;
+            // starte den countdown
             tts.setLanguage(Locale.US);
-            tts.speak("" + second,
-                    TextToSpeech.QUEUE_ADD, null);
+
         }
+    }
+
+    public void startCoundown(TextToSpeech tt)
+    {
+        countdown.start(this, tt);
+        countdown.execute();
     }
 }

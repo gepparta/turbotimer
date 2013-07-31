@@ -11,7 +11,7 @@
         android:ellipsize="marquee"
         android:gravity="center_horizontal"
         android:singleLine="true"
-        android:textSize="@dimen/TEXT_SIZE_16"
+        android:textSize="@dimen/TEXT_SIZE_60"
         android:textStyle="bold" />
 
 </LinearLayout>
